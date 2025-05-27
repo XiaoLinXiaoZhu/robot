@@ -1,48 +1,53 @@
 #ifndef OLED_H
 #define OLED_H
-#include <Arduino.h>
-#include <U8g2lib.h>
-#include <Wire.h>
 
-// // 定义u8g2实例
-// // 选择正确的屏幕芯片SH1106，分辨率128X64，接线方式I2C
-U8G2_SH1106_128X64_NONAME_1_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
-// #define FONT u8g2_font_unifont_t_chinese2 // 定义字体
-#define FONT u8g2_font_t0_22_tf // 定义字体
+#include <U8g2lib.h>
+
+// 定义字体
+// #define FONT u8g2_font_t0_22_tf
+#define FONT  u8g2_font_6x13_tf  // 使用新字体，避免编译错误
+// 定义屏幕类型
+#define U8G2TYPE U8G2_SH1106_128X64_NONAME_1_HW_I2C
 
 class OLED {
 public:
-    OLED() {
-        u8g2.begin(); // 初始化u8g2
-        // u8g2.enableUTF8Print();  // 启动UTF8，需要显示中文，必须要开启
-    }
+  // 使用成员初始化列表正确构造 o 对象
+  OLED()
+    : o(U8G2_R0, U8X8_PIN_NONE) {  // reset 引脚设为无（U8X8_PIN_NONE）
+  }
 
-    void displayText(const String& text, int x, int y) {
-        u8g2.firstPage();
-        do {
-            u8g2.setFont(FONT); // 设置字体
-            u8g2.setCursor(x, y);
-            u8g2.print(text);
-        } while (u8g2.nextPage());
-    }
+  U8G2TYPE o;
 
-    void displayText(const char* text, int x, int y) {
-        u8g2.firstPage();
-        do {
-            u8g2.setFont(FONT); // 设置字体
-            u8g2.setCursor(x, y);
-            u8g2.print(text);
-        } while (u8g2.nextPage());
-    }
-    
-    // Add overloaded method with default coordinates
-    void displayText(const char* text) {
-        displayText(text, 28, 45); // Default position at (28, 45)
-    }
-    
-    void displayText(const String& text) {
-        displayText(text, 28, 45); // Default position at (28, 45)
-    }
+  void init() {
+    o.begin();            // 初始化屏幕
+    o.enableUTF8Print();  // 可选：启用 UTF-8 支持
+  }
+
+  void displayText(const String& text, int x, int y) {
+    o.firstPage();
+    do {
+      o.setFont(FONT);
+      o.setCursor(x, y);
+      o.print(text);
+    } while (o.nextPage());
+  }
+
+  void displayText(const char* text, int x, int y) {
+    o.firstPage();
+    do {
+      o.setFont(FONT);
+      o.setCursor(x, y);
+      o.print(text);
+    } while (o.nextPage());
+  }
+
+  void displayText(const char* text) {
+    displayText(text, 28, 45);  // 默认位置
+  }
+
+  void displayText(const String& text) {
+    displayText(text, 28, 45);  // 默认位置
+  }
 };
 
-#endif // OLED_H
+#endif  // OLED_H
