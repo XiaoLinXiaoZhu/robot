@@ -1,53 +1,49 @@
+// 改为使用 U8X8 库的无完整缓冲版本
+// 因为 U8G2 库的完整缓冲版本会导致占用（128x64 = 512 bit）太大了
+// 这个 Arduino 的 内存只有 2KB
 #ifndef OLED_H
 #define OLED_H
-
-#include <U8g2lib.h>
+#include <U8x8lib.h>
 
 // 定义字体
-// #define FONT u8g2_font_t0_22_tf
-#define FONT  u8g2_font_6x13_tf  // 使用新字体，避免编译错误
-// 定义屏幕类型
-#define U8G2TYPE U8G2_SH1106_128X64_NONAME_1_HW_I2C
+// #define FONT u8x8_font_chroma48medium8_r
+#define FONT u8x8_font_5x7_f
+// 使用 U8X8 库的无完整缓冲版本
+#define OLEDTYPE U8X8_SH1106_128X32_VISIONOX_HW_I2C 
+
+// OLED 最多显示 4 行,使用 uint8_t 类型
+#define MaxLine uint8_t(4)
 
 class OLED {
 public:
-  // 使用成员初始化列表正确构造 o 对象
-  OLED()
-    : o(U8G2_R0, U8X8_PIN_NONE) {  // reset 引脚设为无（U8X8_PIN_NONE）
-  }
+  // 构造函数
+  OLED();
 
-  U8G2TYPE o;
+  OLEDTYPE o;
 
-  void init() {
-    o.begin();            // 初始化屏幕
-    o.enableUTF8Print();  // 可选：启用 UTF-8 支持
-  }
+  // 初始化OLED显示屏
+  void init();
 
-  void displayText(const String& text, int x, int y) {
-    o.firstPage();
-    do {
-      o.setFont(FONT);
-      o.setCursor(x, y);
-      o.print(text);
-    } while (o.nextPage());
-  }
+  // 在指定位置显示文本
+  void displayText(const char* text, int x, int y);
+  
+  // 在默认位置显示文本
+  void displayText(const char* text);
 
-  void displayText(const char* text, int x, int y) {
-    o.firstPage();
-    do {
-      o.setFont(FONT);
-      o.setCursor(x, y);
-      o.print(text);
-    } while (o.nextPage());
+  void clear();
+  
+  uint8_t debugCount = 0;
+  void writeLine(const char* text) {
+    // 将 [debugCount] 拼接到 text 前面
+    char buffer[32];
+    uint8_t currentLine = debugCount % MaxLine; // 当前行数，最多显示 MaxLine 行
+    snprintf(buffer, sizeof(buffer), "%d>%s", debugCount++, text);
+    // 在 OLED 上显示文本
+    o.setFont(FONT); // 设置字体
+    o.clearLine(currentLine); // 清除当前行
+    o.drawString(1, currentLine, buffer);
   }
-
-  void displayText(const char* text) {
-    displayText(text, 28, 45);  // 默认位置
-  }
-
-  void displayText(const String& text) {
-    displayText(text, 28, 45);  // 默认位置
-  }
+  
 };
 
-#endif  // OLED_H
+#endif // OLED_H
