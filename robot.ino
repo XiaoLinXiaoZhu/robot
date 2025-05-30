@@ -46,15 +46,50 @@ static char prev_cmd = '.';                                      // 上一个命
 const char programID[] = "Otto_KAME7";                           // 程序标识符
 jmp_buf jump_env;                                                // 跳转环境(用于异常处理)
 int randomDance = 0;                                             // 随机舞蹈编号
-volatile int MODE = 4;                                           // 当前工作模式(0-4)
+// 使用一个 uint8_t 来同时保存 上次的模式和当前模式
+volatile uint8_t _MODE = 0B00000000; // 上次模式和当前模式的组合
+#define MODE (_MODE & 0x0F) // 当前模式(低4位)
+#define PREV_MODE ((_MODE >> 4) & 0x0F) // 上次模式(高4位)
+#define DEFAULT_MODE 4 // 默认模式
+
+// void debug(const char *message) {
+//   oled->writeLine(message); // 在OLED上显示调试信息
+//   Serial.println(message);   // 在串口监视器上显示调试信息
+// }
+#define debug(message) oled->writeLine(message) // 在OLED上显示调试信息
+
+void setMode(uint8_t newMode) {
+  // debug
+  if (MODE != newMode) switch (newMode) {
+  case 0:
+    debug("CM: Standby");
+    break;
+  case 1:
+    debug("CM: Random Dance");
+    break;
+  case 2:
+    debug("CM: Obstacle Avoidance");
+    break;
+  case 3:
+    debug("CM: Reserved");
+    break;
+  case 4:
+    debug("CM: Manual Control");
+    break;
+  default:
+    debug("CM: Unknown");
+    break;
+  }
+  _MODE = ((_MODE & 0x0F) << 4) | (newMode & 0x0F);
+}
+
+
 
 /**
  * @brief 初始化函数
  * @details 设置串口通信、LED矩阵、机器人初始状态等
  */
 void setup() {
-  oled->writeLine("setup"); // 显示校准次数
-
   Serial.begin(9600);         // 初始化串口通信
   randomSeed(analogRead(A6)); // 设置随机种子
 
@@ -65,27 +100,18 @@ void setup() {
 
   // 校准程序
   {
-    int loopCount = 0;
-    pinMode(CAL_TRIGGER_PIN, OUTPUT);
-    digitalWrite(CAL_TRIGGER_PIN, 0);
-    pinMode(CAL_TRIGGER_PIN, INPUT);
-    // while (digitalRead(CAL_TRIGGER_PIN)) // 检测校准触发
-    while (loopCount < 2) {
-      loopCount++;
-      robot.home();             // 回到初始位置
-      digitalWrite(LED_PIN, 1); // LED闪烁
-      delay(100);
-      digitalWrite(LED_PIN, 0);
-
-      char buffer[32];
-      snprintf(buffer, sizeof(buffer), "init %d", loopCount);
-      oled->writeLine(buffer);
-
-      delay(2000);
-      robot.refresh(); // 刷新舵机位置
-      delay(2000);
-    }
-    digitalWrite(LED_PIN, 0);
+    //- 改为默认校准一次
+    // // pinMode(CAL_TRIGGER_PIN, OUTPUT);
+    // // digitalWrite(CAL_TRIGGER_PIN, 0); 
+    // // pinMode(CAL_TRIGGER_PIN, INPUT);
+    // // while (digitalRead(CAL_TRIGGER_PIN)) // 检测校准触发
+    debug("Calibrating..."); // 显示校准信息
+    robot.home();             // 回到初始位置
+    // // digitalWrite(LED_PIN, 1); // LED闪烁
+    // // delay(100);
+    // // digitalWrite(LED_PIN, 0);
+    delay(2000);
+    robot.refresh(); // 刷新舵机位置
   }
 
   // 初始化时间记录
@@ -105,7 +131,10 @@ void setup() {
   SerialCmd.addCommand("J", requestMode);      // 模式请求
   SerialCmd.addDefaultHandler(receiveStop);    // 默认处理函数
 
-  oled->writeLine("Otto KAME7"); // 显示欢迎信息
+  
+  debug("Setup Complete"); // 显示初始化完成信息
+  // 设置默认模式
+  setMode(DEFAULT_MODE); // 使用新模式设置函数
 }
 
 /**
@@ -165,7 +194,6 @@ void loop() {
     break;
 
   case 4:                   // 模式4: 手动控制模式
-    oled->writeLine("Manual Mode"); // 显示手动模式信息
     SerialCmd.readSerial(); // 读取串口命令
 
     if (robot.getRestState() == false) // 如果不是休息状态
@@ -177,7 +205,8 @@ void loop() {
     break;
 
   default:
-    MODE = 0; // 默认回到模式0
+    // 默认回到模式0
+    setMode(0); // 使用新模式设置函数
     break;
   }
 }
@@ -521,23 +550,23 @@ void requestMode() {
   // 设置对应模式
   switch (modeId) {
   case 0:
-    MODE = 0;
+    setMode(0); // 使用新模式设置函数
     break; // 模式0: 待机
   case 1:  // 模式1: 随机舞蹈
-    MODE = 1;
+    setMode(1); // 使用新模式设置函数
     robot.sing(S_mode1);
     robot.putMouth(one);
     delay(1000);
     delay(200);
     break;
   case 2: // 模式2: 避障模式
-    MODE = 2;
+    setMode(2);
     robot.sing(S_mode2);
     robot.putMouth(two);
     delay(1000);
     break;
   case 3: // 模式3: (预留)
-    MODE = 3;
+    setMode(3);
     robot.sing(S_mode3);
     robot.putMouth(three);
     delay(1000);
@@ -546,10 +575,10 @@ void requestMode() {
     robot.sing(S_mode1);
     robot.putMouth(four);
     delay(1000);
-    MODE = 4;
+    setMode(4);
     break;
   default:
-    MODE = 0;
+    setMode(0);
     break; // 默认模式0
   }
   sendFinalAck();

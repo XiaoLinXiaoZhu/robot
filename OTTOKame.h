@@ -5,7 +5,6 @@
 #include "US.h"
 //! #include "MaxMatrix.h"
 #include <BatReader.h>
-#include "TimerFreeTone.h"
 // servo index to board_pins
 #define FRONT_RIGHT_HIP 0
 #define FRONT_LEFT_HIP 1

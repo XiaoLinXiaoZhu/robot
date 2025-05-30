@@ -745,8 +745,8 @@ void MiniKame::_tone(float noteFrequency, long noteDuration, int silentDuration)
   if (silentDuration == 0) {
     silentDuration = 1;
   }
-
-  TimerFreeTone(MiniKame::pinBuzzer, noteFrequency, noteDuration);
+  //- 我们没有蜂鸣器
+  //- TimerFreeTone(MiniKame::pinBuzzer, noteFrequency, noteDuration);
   // delay(noteDuration);       //REMOVED FOR TimerFreeTone, PUT BACK for TONE       milliseconds to microseconds
   // noTone(PIN_Buzzer);
 

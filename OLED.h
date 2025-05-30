@@ -4,28 +4,21 @@
 #ifndef OLED_H
 #define OLED_H
 #include <U8x8lib.h>
-#include <stdint.h>
 // 定义字体
 // #define FONT u8x8_font_chroma48medium8_r
 #define FONT u8x8_font_5x7_f
 // 使用 U8X8 库的无完整缓冲版本
 #define OLEDTYPE U8X8_SH1106_128X32_VISIONOX_HW_I2C
 
-// OLED 最多显示 4 行,使用 uint8_t 类型
-#define MaxLine uint8_t(4)
 // OLED 最多显示 99 行,使用 uint8_t 类型
-#define MaxDebugCount uint8_t(99)
+constexpr uint8_t MaxDebugCount = 99;
+
 #define oled OLED::getInstance()
 
 class OLED {
 private:
-  // Private constructor for singleton
   OLED();
-
-  // Static instance
   static OLED *instance;
-
-  // Debug counter
   uint8_t debugCount = 0;
 
 public:
@@ -49,33 +42,10 @@ public:
   // 在指定位置显示文本
   void displayText(const char *text, int x, int y);
 
-  // 在默认位置显示文本
-  void displayText(const char *text);
-
   void clear();
 
-  void writeLine(const char *text) {
-    // 当前逻辑行号（0~3）
-    uint8_t currentLine = debugCount & 0x03; // MaxLine == 4 → & 0x03
-    uint8_t lastLine = (currentLine - 1) & 0x03;
-
-    // 格式化 buffer：">%02u %.12s"
-    char buffer[32];
-    snprintf(buffer, sizeof(buffer), ">%02u %.12s", debugCount, text);
-
-    // 清除当前行 + 写入新内容
-    o.clearLine(currentLine);
-    o.setFont(FONT);
-    o.drawString(0, currentLine, buffer);
-    // 清除上一行（如果存在）
-    o.drawString(0, lastLine, " ");
-
-    // 更新计数器并循环（最大到 99）
-    debugCount++;
-    if (debugCount > MaxDebugCount) {
-      debugCount = 0;
-    }
-  }
+  // 在OLED上写入一行文本，会附带行号和当前行标识
+  void writeLine(const char *text);
 };
 
 #endif // OLED_H
