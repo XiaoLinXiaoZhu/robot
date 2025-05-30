@@ -90,6 +90,24 @@ void debug(const char *message) {
   Serial.println(message);
 }
 
+void checkMemory() {
+  // 检查内存使用情况
+  extern int __heap_start, *__brkval;
+  int v;
+  int freeMemory = (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
+  char buffer[32];
+  snprintf(buffer, sizeof(buffer), "Free Memory: %d bytes", freeMemory);
+  debug(buffer);
+}
+
+void setTrim(int index, int value) {
+  // 设置舵机偏移量
+  debug("setting trim");
+  robot.setTrim(index, value);
+  robot.home();             // 回到初始位置
+  delay(2000); // 延时200毫秒
+}
+
 /**
  * @brief 初始化函数
  * @details 设置串口通信、LED矩阵、机器人初始状态等
@@ -101,6 +119,17 @@ void setup() {
   // 初始化机器人
   robot.init(PIN_Buzzer);
   delay(2000);
+  checkMemory(); // 检查内存使用情况
+    // 设置偏移量
+  // ## 偏移量记录
+  setTrim(0, -5);  // 设置0号舵机偏移量
+  setTrim(1, 0);   // 设置1号舵机偏移量
+  setTrim(2, 15);  // 设置2号舵机偏移量
+  setTrim(3, 50);  // 设置3号舵机偏移量
+  setTrim(4, -30); // 设置4号舵机偏移量
+  setTrim(5, 30);  // 设置5号舵机偏移量
+  setTrim(6, -20); // 设置6号舵机偏移量
+  setTrim(7, 30);  // 设置7号舵机偏移量
   // robot.reverseServo(2); // 反转2号舵机方向
 
   // 校准程序
@@ -124,7 +153,7 @@ void setup() {
   robot.putMouth(smile); // 显示笑脸
   robot.sing(S_happy);   // 播放开心音效
   delay(200);
-
+  
   // 注册串口命令处理函数
   SerialCmd.addCommand("S", receiveStop);      // 停止命令
   SerialCmd.addCommand("L", receiveLED);       // LED控制
@@ -150,8 +179,8 @@ void setup() {
  */
 void loop() {
   delay(200); // 暂停200毫秒，避免过快循环
-  // show("Looping"); // 显示循环开始信息
-  // debug("Looping"); // 显示循环开始信息
+  // checkMemory(); // 检查内存使用情况
+
   
   // 串口数据处理
   if (Serial.available() > 0 && MODE != 4) {
@@ -226,10 +255,6 @@ void loop() {
  * @return bool 是否成功执行
  */
 bool gaits(int cmd) {
-  //debug
-  char debugBuffer[50];
-  snprintf(debugBuffer, sizeof(debugBuffer), "Executing command: %d", cmd);
-  debug(debugBuffer); // 显示正在执行的命令
   bool manualMode = false;
   bool taken = true;
 
@@ -687,10 +712,10 @@ void requestCalibration() {
 
   robot.setTrim(servoId, (int)(targetAngle * 10)); // 保存偏移值
   // debug
-  char debugBuffer[50];
+  char debugBuffer[20];
   char angleStr[10];
   formatFloat(targetAngle, angleStr, sizeof(angleStr)); // 格式化角度
-  snprintf(debugBuffer, sizeof(debugBuffer), "Calibration: Servo %d to %s", servoId, angleStr);
+  snprintf(debugBuffer, sizeof(debugBuffer), "CS %d to %s", servoId, angleStr);
   debug(debugBuffer); // 显示校准信息
 
   robot.home();             // 回到初始位置

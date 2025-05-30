@@ -10,6 +10,23 @@
 [Gravity: IO Expansion & Motor Driver Shield](https://wiki.dfrobot.com.cn/_SKU_DFR0502__Gravity__IO_Expansion_%26_Motor_Driver_Shield)
 显示器型号：SH1106_128X32_VISIONOX_HW_I2C
 
+
+## 偏移量记录
+
+| 舵机编号 | 偏移量 | 俯视角/抬高 |
+| -------- | ------ | -------- |
+| 0        | -0.5   | 逆时针   |
+| 1        | 0      | 逆时针   |
+| 2        | 1.5    | 抬升     |
+| 3        | 5      | 降低     |
+| 4        | -3     | 逆时针   |
+| 5        | 3      | 逆时针   |
+| 6        | -2      | 抬升    |
+| 7        | 3      | 降低     |
+
+
+
+
 ## 问题解决
 
 ### 为什么我的Arduino UNO 在上传代码之后能正常工作但是无法通过USB连接到电脑？
