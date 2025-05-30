@@ -1,7 +1,11 @@
 #include "OLED.h"
+// Initialize the static instance pointer
+OLED* OLED::instance = nullptr;
+
 // 构造函数
 OLED::OLED()
   : o(){
+    init();  // 初始化OLED显示屏
 }
 
 // 初始化OLED显示屏
