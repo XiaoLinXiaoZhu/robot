@@ -56,11 +56,12 @@ volatile uint8_t _MODE = 0B00000000; // 上次模式和当前模式的组合
 //   oled->writeLine(message); // 在OLED上显示调试信息
 //   Serial.println(message);   // 在串口监视器上显示调试信息
 // }
-#define debug(message) oled->writeLine(message) // 在OLED上显示调试信息
+// #define debug(message) oled->writeLine(message) // 在OLED上显示调试信息
+#define debug(message) Serial.println(message) // 在串口监视器上显示调试信息
 
 void setMode(uint8_t newMode) {
   // debug
-  if (MODE != newMode) switch (newMode) {
+  switch (newMode) {
   case 0:
     debug("CM: Standby");
     break;
@@ -131,7 +132,7 @@ void setup() {
   SerialCmd.addCommand("J", requestMode);      // 模式请求
   SerialCmd.addDefaultHandler(receiveStop);    // 默认处理函数
 
-  
+
   debug("Setup Complete"); // 显示初始化完成信息
   // 设置默认模式
   setMode(DEFAULT_MODE); // 使用新模式设置函数
@@ -142,6 +143,10 @@ void setup() {
  * @details 根据当前模式执行不同行为，处理串口输入
  */
 void loop() {
+  if (Serial.available()) { // 检查是否有可用的数据
+    String receivedData = Serial.readStringUntil('\n'); // 读取一行数据直到遇到换行符
+    oled->writeLine(receivedData.c_str()); // 调用writeLine函数显示数据
+  }
   // 串口数据处理
   if (Serial.available() > 0 && MODE != 4) {
     SerialCmd.readSerial();    // 读取串口命令

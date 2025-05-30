@@ -61,6 +61,9 @@ void OttoSerialCommand::readSerial() {
 			onlyOneCommand = false; //
 
 			bufPos = 0;           // Reset to start of buffer
+			// debug buffer
+			Serial.print(F("Buffer: "));
+			Serial.println(buffer);
 			token = strtok_r(buffer, delim, &last);   // Search for command at start of buffer
 			if (token == NULL) return;
 			matched = false;
