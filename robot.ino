@@ -48,39 +48,13 @@ jmp_buf jump_env;                                                // 跳转环境
 int randomDance = 0;                                             // 随机舞蹈编号
 volatile int MODE = 4;                                           // 当前工作模式(0-4)
 
-OLED oled; // OLED灯实例
-
-char *combineStr(const char *str1, const char *str2)
-{
-  // 计算新字符串的长度
-  size_t len1 = strlen(str1);
-  size_t len2 = strlen(str2);
-  char *result = (char *)malloc(len1 + len2 + 1); // 分配内存
-  if (result == NULL)
-  {
-    return NULL; // 内存分配失败
-  }
-  strcpy(result, str1); // 拷贝第一个字符串
-  strcat(result, str2); // 拼接第二个字符串
-  return result;        // 返回新字符串
-}
-
-char *conbineStr(const char *str1, int num)
-{
-  // 将整数转换为字符串
-  char numStr[12];                 // 足够容纳整数的字符串
-  sprintf(numStr, "%d", num);      // 将整数转换为字符串
-  return combineStr(str1, numStr); // 调用combineStr函数
-}
-
 /**
  * @brief 初始化函数
  * @details 设置串口通信、LED矩阵、机器人初始状态等
  */
 void setup()
 {
-  oled.init();
-  oled.displayText("setup", 12, 20); // 显示校准次数
+  oled->writeLine("setup"); // 显示校准次数
 
   Serial.begin(9600);         // 初始化串口通信
   randomSeed(analogRead(A6)); // 设置随机种子
@@ -97,7 +71,7 @@ void setup()
     digitalWrite(CAL_TRIGGER_PIN, 0);
     pinMode(CAL_TRIGGER_PIN, INPUT);
     // while (digitalRead(CAL_TRIGGER_PIN)) // 检测校准触发
-    while (loopCount < 10)
+    while (loopCount < 2)
     {
       loopCount++;
       robot.home();             // 回到初始位置
@@ -105,9 +79,9 @@ void setup()
       delay(100);
       digitalWrite(LED_PIN, 0);
 
-      char buffer[64];
+      char buffer[32];
       snprintf(buffer, sizeof(buffer), "init %d", loopCount);
-      oled.displayText(buffer, 12, 20);
+      oled->writeLine(buffer);
 
       delay(2000);
       robot.refresh(); // 刷新舵机位置
@@ -118,16 +92,6 @@ void setup()
 
   // 初始化时间记录
   perv_sensor_time = prev_serial_data_time = millis();
-
-  // 启动动画
-  // for (int i = 0; i < 2; i++)
-  // {
-  //   for (int i = 0; i < 8; i++)
-  //   {
-  //     robot.putAnimationMouth(littleUuh, i); // 显示动画嘴型
-  //     delay(150);
-  //   }
-  // }
   robot.putMouth(smile); // 显示笑脸
   robot.sing(S_happy);   // 播放开心音效
   delay(200);
@@ -143,7 +107,7 @@ void setup()
   SerialCmd.addCommand("J", requestMode);      // 模式请求
   SerialCmd.addDefaultHandler(receiveStop);    // 默认处理函数
 
-  oled.displayText("Otto KAME7", 12, 20); // 显示欢迎信息
+  oled->writeLine("Otto KAME7"); // 显示欢迎信息
 }
 
 /**
@@ -152,11 +116,6 @@ void setup()
  */
 void loop()
 {
-  char buffer[32];
-  snprintf(buffer, sizeof(buffer), "CMode%d", MODE);
-  oled.displayText(buffer, 12, 20);
-  delay(1000);
-
   // 串口数据处理
   if (Serial.available() > 0 && MODE != 4)
   {
@@ -211,6 +170,7 @@ void loop()
     break;
 
   case 4:                   // 模式4: 手动控制模式
+    oled->writeLine("Manual Mode"); // 显示手动模式信息
     SerialCmd.readSerial(); // 读取串口命令
 
     if (robot.getRestState() == false) // 如果不是休息状态
@@ -225,8 +185,6 @@ void loop()
     MODE = 0; // 默认回到模式0
     break;
   }
-
-  oled.displayText("Hello World!!");
 }
 
 /**
