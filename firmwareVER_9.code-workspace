@@ -7,7 +7,16 @@
 	"settings": {
 		"files.associations": {
 			"*.ejs": "html",
-			"initializer_list": "cpp"
+			"initializer_list": "cpp",
+			"cstddef": "cpp",
+			"cstdint": "cpp",
+			"cstdlib": "cpp",
+			"cstring": "cpp",
+			"exception": "cpp",
+			"new": "cpp",
+			"type_traits": "cpp",
+			"xstddef": "cpp",
+			"xtr1common": "cpp"
 		}
 	}
 }

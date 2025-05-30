@@ -1,8 +1,6 @@
 #include <setjmp.h>
 #include "OTTOKame.h"
-//! #include "MaxMatrix.h"
-//! MaxMatrix ledmatrix = MaxMatrix(A1, A2, A3, 1);  // LED点阵控制对象，使用A1,A2,A3引脚，1个矩阵
-#include "OLED.h"
+// #include "OLED.h"
 #include <OttoSerialCommand.h>
 OttoSerialCommand SerialCmd; // 串口命令处理对象
 
@@ -58,6 +56,7 @@ volatile uint8_t _MODE = 0B00000000; // 上次模式和当前模式的组合
 // }
 // #define debug(message) oled->writeLine(message) // 在OLED上显示调试信息
 #define debug(message) Serial.println(message) // 在串口监视器上显示调试信息
+// #define show(message) oled->writeLine(message) // 在OLED上显示调试信息
 
 void setMode(uint8_t newMode) {
   // debug
@@ -132,6 +131,7 @@ void setup() {
   SerialCmd.addCommand("J", requestMode);      // 模式请求
   SerialCmd.addDefaultHandler(receiveStop);    // 默认处理函数
 
+  SerialCmd.setDebug(debug); // 设置调试函数
 
   debug("Setup Complete"); // 显示初始化完成信息
   // 设置默认模式
@@ -143,10 +143,10 @@ void setup() {
  * @details 根据当前模式执行不同行为，处理串口输入
  */
 void loop() {
-  if (Serial.available()) { // 检查是否有可用的数据
-    String receivedData = Serial.readStringUntil('\n'); // 读取一行数据直到遇到换行符
-    oled->writeLine(receivedData.c_str()); // 调用writeLine函数显示数据
-  }
+  delay(200); // 暂停200毫秒，避免过快循环
+  // show("Looping"); // 显示循环开始信息
+  // debug("Looping"); // 显示循环开始信息
+  
   // 串口数据处理
   if (Serial.available() > 0 && MODE != 4) {
     SerialCmd.readSerial();    // 读取串口命令
@@ -197,9 +197,12 @@ void loop() {
 
   case 3: // 模式3: (预留)
     break;
-
+//- start
   case 4:                   // 模式4: 手动控制模式
+  //debug
+    debug("Before Read Serial");
     SerialCmd.readSerial(); // 读取串口命令
+    debug("After Read Serial");
 
     if (robot.getRestState() == false) // 如果不是休息状态
     {
@@ -208,7 +211,7 @@ void loop() {
 
     robot.refresh(); // 刷新状态
     break;
-
+//- end
   default:
     // 默认回到模式0
     setMode(0); // 使用新模式设置函数

@@ -5,7 +5,8 @@
 */
 
 #if defined(ARDUINO) && ARDUINO >= 100
-#include "Arduino.h"
+// #include "Arduino.h"
+#include <Arduino.h>
 #else
 #include "WProgram.h"
 #endif
@@ -14,7 +15,8 @@
 
 
 #include <string.h>
-
+// #include "OLED.h"
+// #define show(message) oled->writeLine(message) // 在OLED上显示调试信息
 
 // Constructor makes sure some things are set. 
 OttoSerialCommand::OttoSerialCommand() {
@@ -24,7 +26,10 @@ OttoSerialCommand::OttoSerialCommand() {
 	clearBuffer();
 }
 
-
+// Set a debug function to call with debug messages.
+void OttoSerialCommand::setDebug(void (*function)(const char *)) {
+	debug = function;
+}
 
 //
 // Initialize the command buffer being processed to all null characters
@@ -48,6 +53,10 @@ char *OttoSerialCommand::next() {
 // When the terminator character (default '\r') is seen, it starts parsing the 
 // buffer for a prefix command, and calls handlers setup by addCommand() member
 void OttoSerialCommand::readSerial() {
+	if (debug) {
+		debug("Reading Serial");
+	}
+	return; // Exit if no data is available
 	bool onlyOneCommand = true;
 	// If we're using the Hardware port, check it.   Otherwise check the user-created OttoSoftwareSerial Port
 	while ((Serial.available() > 0) && (onlyOneCommand == true)) {
@@ -55,15 +64,21 @@ void OttoSerialCommand::readSerial() {
 		boolean matched;
 
 		inChar = Serial.read();   // Read single available character, there may be more waiting
-
+		// debug
+		char debugBuffer[64];
+		
+		snprintf(debugBuffer, sizeof(debugBuffer), "Read: %c", inChar);
+		debug(debugBuffer); // Print the character read to the debug output
+		// show(debugBuffer); // Print the character read to the OLED display
 		if (inChar == term) {     // Check for the terminator (default '\r') meaning end of command
-
+			
 			onlyOneCommand = false; //
 
 			bufPos = 0;           // Reset to start of buffer
 			// debug buffer
-			Serial.print(F("Buffer: "));
-			Serial.println(buffer);
+			snprintf(debugBuffer, sizeof(debugBuffer), "Buffer: %s", buffer);
+			debug(debugBuffer);
+			// show(debugBuffer);
 			token = strtok_r(buffer, delim, &last);   // Search for command at start of buffer
 			if (token == NULL) return;
 			matched = false;
