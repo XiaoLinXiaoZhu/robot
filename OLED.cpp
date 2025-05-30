@@ -1,11 +1,11 @@
 #include "OLED.h"
 // Initialize the static instance pointer
-OLED* OLED::instance = nullptr;
+OLED *OLED::instance = nullptr;
 
 // 构造函数
 OLED::OLED()
-  : o(){
-    init();  // 初始化OLED显示屏
+  : o() {
+  init();  // 初始化OLED显示屏
 }
 
 // 初始化OLED显示屏
@@ -16,12 +16,12 @@ void OLED::init() {
 }
 
 // 在指定位置显示文本(char*类型)
-void OLED::displayText(const char* text, int x, int y) {
+void OLED::displayText(const char *text, int x, int y) {
   o.drawString(x, y, text);
 }
 
 // 在默认位置显示文本(char*类型)
-void OLED::displayText(const char* text) {
+void OLED::displayText(const char *text) {
   displayText(0, 1, text);
 }
 

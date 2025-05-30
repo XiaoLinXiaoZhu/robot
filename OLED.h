@@ -17,8 +17,7 @@
 #define MaxDebugCount uint8_t(99)
 #define oled OLED::getInstance()
 
-class OLED
-{
+class OLED {
 private:
   // Private constructor for singleton
   OLED();
@@ -37,10 +36,8 @@ public:
   void operator=(const OLED &) = delete;
 
   // Get the singleton instance
-  static OLED *getInstance()
-  {
-    if (instance == nullptr)
-    {
+  static OLED *getInstance() {
+    if (instance == nullptr) {
       instance = new OLED();
     }
     return instance;
@@ -57,8 +54,7 @@ public:
 
   void clear();
 
-  void writeLine(const char *text)
-  {
+  void writeLine(const char *text) {
     // 当前逻辑行号（0~3）
     uint8_t currentLine = debugCount & 0x03; // MaxLine == 4 → & 0x03
     uint8_t lastLine = (currentLine - 1) & 0x03;
@@ -76,8 +72,7 @@ public:
 
     // 更新计数器并循环（最大到 99）
     debugCount++;
-    if (debugCount > MaxDebugCount)
-    {
+    if (debugCount > MaxDebugCount) {
       debugCount = 0;
     }
   }

@@ -52,8 +52,7 @@ volatile int MODE = 4;                                           // 当前工作
  * @brief 初始化函数
  * @details 设置串口通信、LED矩阵、机器人初始状态等
  */
-void setup()
-{
+void setup() {
   oled->writeLine("setup"); // 显示校准次数
 
   Serial.begin(9600);         // 初始化串口通信
@@ -71,8 +70,7 @@ void setup()
     digitalWrite(CAL_TRIGGER_PIN, 0);
     pinMode(CAL_TRIGGER_PIN, INPUT);
     // while (digitalRead(CAL_TRIGGER_PIN)) // 检测校准触发
-    while (loopCount < 2)
-    {
+    while (loopCount < 2) {
       loopCount++;
       robot.home();             // 回到初始位置
       digitalWrite(LED_PIN, 1); // LED闪烁
@@ -114,18 +112,15 @@ void setup()
  * @brief 主循环函数
  * @details 根据当前模式执行不同行为，处理串口输入
  */
-void loop()
-{
+void loop() {
   // 串口数据处理
-  if (Serial.available() > 0 && MODE != 4)
-  {
+  if (Serial.available() > 0 && MODE != 4) {
     SerialCmd.readSerial();    // 读取串口命令
     robot.putMouth(happyOpen); // 显示张嘴表情
   }
 
   // 模式切换处理
-  switch (MODE)
-  {
+  switch (MODE) {
   case 0: // 模式0: 待机
     break;
 
@@ -192,8 +187,7 @@ void loop()
  * @param cmd 动作指令编号
  * @return bool 是否成功执行
  */
-bool gaits(int cmd)
-{
+bool gaits(int cmd) {
   bool manualMode = false;
   bool taken = true;
 
@@ -201,8 +195,7 @@ bool gaits(int cmd)
     return;
 
   // 动作指令处理
-  switch (cmd)
-  {
+  switch (cmd) {
   case 1:
     robot.run(0);
     break; // 停止
@@ -254,8 +247,7 @@ bool gaits(int cmd)
     manualMode = true;
   }
 
-  if (!manualMode)
-  {
+  if (!manualMode) {
     sendFinalAck(); // 发送完成确认
   }
   if (taken)
@@ -267,11 +259,9 @@ bool gaits(int cmd)
  * @brief 暂停函数
  * @param period 暂停时间(毫秒)
  */
-void pause(int period)
-{
+void pause(int period) {
   long timeout = millis() + period;
-  do
-  {
+  do {
     robot.refresh(); // 保持刷新状态
   } while (millis() <= timeout);
 }
@@ -279,16 +269,13 @@ void pause(int period)
 /**
  * @brief 障碍物检测函数
  */
-void obstacleDetector()
-{
+void obstacleDetector() {
   int distance = robot.getDistance(); // 获取距离
 
   if (distance < 15) // 如果距离小于15cm
   {
     obstacleDetected = true; // 设置障碍物标志
-  }
-  else
-  {
+  } else {
     obstacleDetected = false; // 清除障碍物标志
   }
 }
@@ -296,8 +283,7 @@ void obstacleDetector()
 /**
  * @brief 停止命令处理函数
  */
-void receiveStop()
-{
+void receiveStop() {
   sendAck();      // 发送确认
   robot.home();   // 回到初始位置
   prev_cmd = '.'; // 重置前一个命令
@@ -307,8 +293,7 @@ void receiveStop()
 /**
  * @brief 发送确认信号
  */
-void sendAck()
-{
+void sendAck() {
   delay(30);
   Serial.print(F("&&"));   // 开始标记
   Serial.print(F("A"));    // 确认标识
@@ -319,8 +304,7 @@ void sendAck()
 /**
  * @brief 发送最终确认信号
  */
-void sendFinalAck()
-{
+void sendFinalAck() {
   delay(30);
   Serial.print(F("&&"));   // 开始标记
   Serial.print(F("F"));    // 完成标识
@@ -331,8 +315,7 @@ void sendFinalAck()
 /**
  * @brief 运动命令处理函数
  */
-void receiveMovement()
-{
+void receiveMovement() {
   sendAck();
 
   if (robot.getRestState() == true) // 如果处于休息状态
@@ -343,13 +326,10 @@ void receiveMovement()
   robot.clearMouth(); // 清除嘴部显示
   char *arg;
   arg = SerialCmd.next(); // 获取第一个参数(动作ID)
-  if (arg != NULL)
-  {
+  if (arg != NULL) {
     moveId = atoi(arg);    // 设置动作ID
     robot.putMouth(smile); // 显示笑脸
-  }
-  else
-  {
+  } else {
     robot.putMouth(xMouth); // 显示X嘴
     delay(2000);
     robot.clearMouth();
@@ -358,23 +338,17 @@ void receiveMovement()
 
   // 获取时间参数
   arg = SerialCmd.next();
-  if (arg != NULL)
-  {
+  if (arg != NULL) {
     T = atoi(arg);
-  }
-  else
-  {
+  } else {
     T = 1000;
   }
 
   // 获取幅度参数
   arg = SerialCmd.next();
-  if (arg != NULL)
-  {
+  if (arg != NULL) {
     moveSize = atoi(arg);
-  }
-  else
-  {
+  } else {
     moveSize = 15;
   }
 }
@@ -382,8 +356,7 @@ void receiveMovement()
 /**
  * @brief LED控制处理函数
  */
-void receiveLED()
-{
+void receiveLED() {
   sendAck();
   robot.home();
 
@@ -391,13 +364,10 @@ void receiveLED()
   char *arg;
   char *endstr;
   arg = SerialCmd.next(); // 获取LED模式参数
-  if (arg != NULL)
-  {
+  if (arg != NULL) {
     matrix = strtoul(arg, &endstr, 2); // 二进制字符串转数值
     robot.putMouth(matrix, false);     // 设置嘴部LED
-  }
-  else
-  {
+  } else {
     robot.putMouth(xMouth); // 显示X嘴
     delay(2000);
     robot.clearMouth();
@@ -409,8 +379,7 @@ void receiveLED()
 /**
  * @brief 声音控制处理函数
  */
-void receiveSing()
-{
+void receiveSing() {
   sendAck();
   robot.home();
 
@@ -419,16 +388,14 @@ void receiveSing()
   arg = SerialCmd.next(); // 获取声音编号
   if (arg != NULL)
     sing = atoi(arg);
-  else
-  {
+  else {
     robot.putMouth(xMouth); // 显示X嘴
     delay(2000);
     robot.clearMouth();
   }
 
   // 播放对应声音
-  switch (sing)
-  {
+  switch (sing) {
   case 1:
     robot.sing(S_connection);
     break;
@@ -495,8 +462,7 @@ void receiveSing()
 /**
  * @brief 距离请求处理函数
  */
-void requestDistance()
-{
+void requestDistance() {
   robot.home();
   int distance = robot.getDistance(); // 获取距离
   Serial.print(F("&&"));              // 开始标记
@@ -509,8 +475,7 @@ void requestDistance()
 /**
  * @brief 电池状态请求处理函数
  */
-void requestBattery()
-{
+void requestBattery() {
   robot.home();
   double batteryLevel = robot.getBatteryLevel(); // 获取电池电量
 
@@ -524,8 +489,7 @@ void requestBattery()
 /**
  * @brief 程序ID请求处理函数
  */
-void requestProgramId()
-{
+void requestProgramId() {
   robot.home();
   Serial.print(F("&&"));   // 开始标记
   Serial.print(F("I "));   // ID标识
@@ -537,21 +501,17 @@ void requestProgramId()
 /**
  * @brief 模式请求处理函数
  */
-void requestMode()
-{
+void requestMode() {
   sendAck();
   robot.home();
   char *arg;
   arg = SerialCmd.next(); // 获取模式编号
-  if (arg != NULL)
-  {
+  if (arg != NULL) {
     modeId = atoi(arg);
     robot.putMouth(heart); // 显示心形
     delay(1000);
     robot.clearMouth();
-  }
-  else
-  {
+  } else {
     robot.putMouth(xMouth); // 显示X嘴
     delay(2000);
     robot.clearMouth();
@@ -559,8 +519,7 @@ void requestMode()
   }
 
   // 设置对应模式
-  switch (modeId)
-  {
+  switch (modeId) {
   case 0:
     MODE = 0;
     break; // 模式0: 待机
@@ -601,28 +560,23 @@ void requestMode()
 /**
  * @brief 手势控制处理函数
  */
-void receiveGesture()
-{
+void receiveGesture() {
   sendAck();
   robot.home();
 
   int gesture = 0;
   char *arg;
   arg = SerialCmd.next(); // 获取手势编号
-  if (arg != NULL)
-  {
+  if (arg != NULL) {
     gesture = atoi(arg);
-  }
-  else
-  {
+  } else {
     robot.putMouth(xMouth); // 显示X嘴
     delay(2000);
     robot.clearMouth();
   }
 
   // 执行对应手势
-  switch (gesture)
-  {
+  switch (gesture) {
   case 1:
     robot.playGesture(OttoHappy);
     break; // 开心手势
