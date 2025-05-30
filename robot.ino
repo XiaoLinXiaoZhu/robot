@@ -1,7 +1,7 @@
 #include <setjmp.h>
 #include "OTTOKame.h"
 // #include "OLED.h"
-#include <OttoSerialCommand.h>
+#include "OttoSerialCommand.h"
 OttoSerialCommand SerialCmd; // 串口命令处理对象
 
 // 硬件引脚定义
@@ -55,7 +55,7 @@ volatile uint8_t _MODE = 0B00000000; // 上次模式和当前模式的组合
 //   Serial.println(message);   // 在串口监视器上显示调试信息
 // }
 // #define debug(message) oled->writeLine(message) // 在OLED上显示调试信息
-#define debug(message) Serial.println(message) // 在串口监视器上显示调试信息
+// #define debug(message) Serial.println(message) // 在串口监视器上显示调试信息
 // #define show(message) oled->writeLine(message) // 在OLED上显示调试信息
 
 void setMode(uint8_t newMode) {
@@ -83,7 +83,12 @@ void setMode(uint8_t newMode) {
   _MODE = ((_MODE & 0x0F) << 4) | (newMode & 0x0F);
 }
 
-
+void debug(const char *message) {
+  // 在OLED上显示调试信息
+  // oled->writeLine(message);
+  // 在串口监视器上显示调试信息
+  Serial.println(message);
+}
 
 /**
  * @brief 初始化函数
@@ -129,6 +134,7 @@ void setup() {
   SerialCmd.addCommand("D", requestDistance);  // 距离请求
   SerialCmd.addCommand("I", requestProgramId); // 程序ID请求
   SerialCmd.addCommand("J", requestMode);      // 模式请求
+  SerialCmd.addCommand("C", requestCalibration); // 校准请求
   SerialCmd.addDefaultHandler(receiveStop);    // 默认处理函数
 
   SerialCmd.setDebug(debug); // 设置调试函数
@@ -197,21 +203,16 @@ void loop() {
 
   case 3: // 模式3: (预留)
     break;
-//- start
   case 4:                   // 模式4: 手动控制模式
-  //debug
-    debug("Before Read Serial");
     SerialCmd.readSerial(); // 读取串口命令
-    debug("After Read Serial");
 
     if (robot.getRestState() == false) // 如果不是休息状态
     {
       gaits(moveId); // 执行指定动作
     }
 
-    robot.refresh(); // 刷新状态
+    robot.refresh(); // 刷新状态(相当于update)
     break;
-//- end
   default:
     // 默认回到模式0
     setMode(0); // 使用新模式设置函数
@@ -225,6 +226,10 @@ void loop() {
  * @return bool 是否成功执行
  */
 bool gaits(int cmd) {
+  //debug
+  char debugBuffer[50];
+  snprintf(debugBuffer, sizeof(debugBuffer), "Executing command: %d", cmd);
+  debug(debugBuffer); // 显示正在执行的命令
   bool manualMode = false;
   bool taken = true;
 
@@ -631,4 +636,64 @@ void receiveGesture() {
   }
 
   sendFinalAck();
+}
+
+/**
+ * @brief 将浮点数转换为格式化的字符串
+ * @param value 要格式化的浮点数
+ * @param buffer 输出缓冲区
+ * @param bufferSize 缓冲区大小
+ */
+void formatFloat(float value, char *buffer, int bufferSize) {
+  int intPart = (int)value;
+  int decPart = abs((int)(value * 100) % 100);
+  snprintf(buffer, bufferSize, "%d.%02d", intPart, decPart);
+}
+
+/**
+ * @brief 校准请求处理函数
+ */
+void requestCalibration() {
+  sendAck();
+
+  if (robot.getRestState() == false) // 如果不处于休息状态
+  {
+    robot.setRestState(true); // 进入休息状态
+  }
+
+  // 获取参数： servo ID
+  int servoId = 0;
+  char *arg = SerialCmd.next(); // 获取参数
+  if (arg != NULL) {
+    servoId = atoi(arg); // 转换为整数
+    if (servoId < 0 || servoId > 7) {
+      servoId = 0; // 如果超出范围则默认为0
+    }
+  } else {
+    servoId = 0; // 默认值
+  }
+
+  // 获得参数：目标角度
+  float targetAngle = 0.0;
+  arg = SerialCmd.next(); // 获取目标角度参数
+  if (arg != NULL) {
+    targetAngle = atof(arg); // 转换为浮点数
+    if (targetAngle < -90.0 || targetAngle > 90.0) {
+      targetAngle = 0.0; // 如果超出范围则默认为0
+    }
+  } else {
+    targetAngle = 0.0; // 默认值
+  }
+
+  robot.setTrim(servoId, (int)(targetAngle * 10)); // 保存偏移值
+  // debug
+  char debugBuffer[50];
+  char angleStr[10];
+  formatFloat(targetAngle, angleStr, sizeof(angleStr)); // 格式化角度
+  snprintf(debugBuffer, sizeof(debugBuffer), "Calibration: Servo %d to %s", servoId, angleStr);
+  debug(debugBuffer); // 显示校准信息
+
+  robot.home();             // 回到初始位置
+  delay(2000);
+  robot.refresh(); // 刷新舵机位置
 }

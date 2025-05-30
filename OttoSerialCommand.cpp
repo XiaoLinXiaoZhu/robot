@@ -19,16 +19,26 @@
 // #define show(message) oled->writeLine(message) // 在OLED上显示调试信息
 
 // Constructor makes sure some things are set. 
+void _debug(const char *message) {
+	return;
+}
 OttoSerialCommand::OttoSerialCommand() {
 	strncpy(delim, " ", MAXDELIMETER);  // strtok_r needs a null-terminated string
 	term = '\r';   // return character, default terminator for commands
 	numCommand = 0;    // Number of callback handlers installed
 	clearBuffer();
+
+	debug = _debug; // Default debug function does nothing
 }
 
 // Set a debug function to call with debug messages.
 void OttoSerialCommand::setDebug(void (*function)(const char *)) {
+	if (function == NULL) {
+		debug = _debug; // If no function provided, set to default that does nothing
+		return;
+	}
 	debug = function;
+	debug("Debug function set."); // Call the debug function to indicate it has been set
 }
 
 //
@@ -53,10 +63,6 @@ char *OttoSerialCommand::next() {
 // When the terminator character (default '\r') is seen, it starts parsing the 
 // buffer for a prefix command, and calls handlers setup by addCommand() member
 void OttoSerialCommand::readSerial() {
-	if (debug) {
-		debug("Reading Serial");
-	}
-	return; // Exit if no data is available
 	bool onlyOneCommand = true;
 	// If we're using the Hardware port, check it.   Otherwise check the user-created OttoSoftwareSerial Port
 	while ((Serial.available() > 0) && (onlyOneCommand == true)) {
@@ -64,18 +70,15 @@ void OttoSerialCommand::readSerial() {
 		boolean matched;
 
 		inChar = Serial.read();   // Read single available character, there may be more waiting
-		// debug
-		char debugBuffer[64];
-		
-		snprintf(debugBuffer, sizeof(debugBuffer), "Read: %c", inChar);
-		debug(debugBuffer); // Print the character read to the debug output
-		// show(debugBuffer); // Print the character read to the OLED display
+
 		if (inChar == term) {     // Check for the terminator (default '\r') meaning end of command
 			
 			onlyOneCommand = false; //
 
 			bufPos = 0;           // Reset to start of buffer
 			// debug buffer
+
+			char debugBuffer[64]; // Buffer for debug messages
 			snprintf(debugBuffer, sizeof(debugBuffer), "Buffer: %s", buffer);
 			debug(debugBuffer);
 			// show(debugBuffer);
@@ -86,7 +89,8 @@ void OttoSerialCommand::readSerial() {
 
 				// Compare the found command against the list of known commands for a match
 				if (strncmp(token, CommandList[i].command, SERIALCOMMANDBUFFER) == 0) {
-
+					debug("Matched command: "); // Debug output for matched command
+					debug(CommandList[i].command); // Debug output for matched command
 					// Execute the stored handler function for the command
 					(*CommandList[i].function)();
 					clearBuffer();
