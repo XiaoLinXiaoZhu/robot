@@ -506,12 +506,22 @@ void MiniKame::setServo(int id, float target) {
     servo[id].write(180 - (target + trim[id]));
 }
 
+
+
 void MiniKame::execute(float steps, float period[8], int amplitude[8], int offset[8], int phase[8]) {
   if (getRestState() == true) {
     setRestState(false);
   }
   attachServo();
   for (int i = 0; i < 8; i++) {
+    // debug all setting
+    char debug_msg[50];
+    char formatted_period[10];
+    uint8_t intPart = (int)period[i];
+    uint8_t decPart = abs((int)(period[i] * 100) % 100);
+    snprintf(formatted_period, sizeof(formatted_period), "%d.%02d", intPart, decPart);
+    sprintf(debug_msg, "Oscillator %d: period=%s, amp=%d, offset=%d, phase=%d", i, formatted_period, amplitude[i], offset[i], phase[i]);
+    Serial.println(debug_msg);
     oscillator[i].setPeriod(period[i]);
     oscillator[i].setAmplitude(amplitude[i]);
     oscillator[i].setPhase(phase[i]);

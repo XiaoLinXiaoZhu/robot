@@ -140,9 +140,12 @@ void setup() {
   robot.init(PIN_Buzzer);
 
   checkMemory();  // 检查内存使用情况
+  // 设置反转情况
+  robot.reverseServo(3);
+  // robot.reverseServo(7);
   // 设置偏移量
   robot.loadTrim();  // 从EEPROM加载舵机偏移量
-  // robot.reverseServo(2); // 反转2号舵机方向
+ 
 
   // 校准程序
   {
@@ -712,28 +715,24 @@ void requestCalibration() {
   }
 
   // 获得参数：目标角度
-  float targetAngle = 0.0;
+  int targetAngle = 0;  // 默认目标角度
   arg = SerialCmd.next();  // 获取目标角度参数
   if (arg != NULL) {
-    targetAngle = atof(arg);  // 转换为浮点数
-    if (targetAngle < -90.0 || targetAngle > 90.0) {
-      targetAngle = 0.0;  // 如果超出范围则默认为0
+    targetAngle = atoi(arg);  // 转换为整数
+    if (targetAngle < -90 || targetAngle > 90) {
+      targetAngle = 0;  // 如果超出范围则默认为0
     }
   } else {
-    targetAngle = 0.0;  // 默认值
+    targetAngle = 0;  // 默认值
   }
 
-  robot.setTrim(servoId, (int)(targetAngle * 10));  // 保存偏移值
+  robot.setTrim(servoId, targetAngle);  // 保存偏移值
   // debug
   char debugBuffer[20];
-  char angleStr[10];
-  formatFloat(targetAngle, angleStr, sizeof(angleStr));  // 格式化角度
-  snprintf(debugBuffer, sizeof(debugBuffer), "CS %d to %s", servoId, angleStr);
+  snprintf(debugBuffer, sizeof(debugBuffer), "CS %d to %d", servoId, targetAngle);
   debug(debugBuffer);  // 显示校准信息
-
-
+  robot.home();  // 回到初始位置
   delay(2000);
-  robot.refresh();  // 刷新舵机位置
 
   robot.storeTrim();  // 保存偏移值到EEPROM
 
