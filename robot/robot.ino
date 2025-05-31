@@ -143,7 +143,7 @@ void setup() {
   // 设置反转情况
   robot.reverseServo(3);
   robot.reverseServo(7);
- 
+
 
   // 校准程序
   {
@@ -322,32 +322,32 @@ bool gaits(int cmd) {
   case 15:
     robot.scared();
     break;  // 害怕动作
-  
+
   case 90:
     robot.runSingle(0);
-    break;  // 前右腿单独动作
+    break;  // 0 号舵机单独动作
   case 91:
     robot.runSingle(1);
-    break;  // 前左腿单独动作
+    break;  // 1 号舵机单独动作
   case 92:
     robot.runSingle(2);
-    break;  // 后右腿单独动作
+    break;  // 2 号舵机单独动作
   case 93:
     robot.runSingle(3);
-    break;  // 后左腿单独动作
+    break;  // 3 号舵机单独动作
   case 94:
     robot.runSingle(4);
-    break;  // 前右腿单独动作(反转)
+    break;  // 4 号舵机单独动作
   case 95:
     robot.runSingle(5);
-    break;  // 前左腿单独动作(反转)
+    break;  // 5 号舵机单独动作
   case 96:
     robot.runSingle(6);
-    break;  // 后右腿单独动作(反转)
+    break;  // 6 号舵机单独动作
   case 97:
     robot.runSingle(7);
-    break;  // 后左腿单独动作(反转)
-  
+    break;  // 7 号舵机单独动作
+
   default:
     taken = false;
     manualMode = true;

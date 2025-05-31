@@ -57,14 +57,14 @@ ECHO引脚    - 11
 
 | 舵机编号 | 偏移量 | 俯视角/抬高 |
 | -------- | ------ | -------- |
-| 0        | -0.5   | 逆时针   |
+| 0        | -5     | 逆时针   |
 | 1        | 0      | 逆时针   |
-| 2        | -5    | 抬升     |
-| 3        | R -35   | 降低     |
-| 4        | -3     | 逆时针   |
-| 5        | 3      | 逆时针   |
-| 6        | -2     | 抬升    |
-| 7        | R 3      | 降低     |
+| 2        | -5     | 抬升     |
+| 3        | 反转 -35 | 降低     |
+| 4        | -30    | 逆时针   |
+| 5        | 30     | 逆时针   |
+| 6        | -20    | 抬升    |
+| 7        | 反转 30 | 降低     |
 
 
 
@@ -115,4 +115,120 @@ bool value = digitalRead(PIN_INDEX);
 // 读取引脚的电平状态
 // value将会是HIGH或LOW，表示引脚的电平状态。
 ```
+
+
+
+## 自定义指令
+
+默认状态（4）下，程序能够通过I/O口接收自定义指令，实现手动控制。
+
+```cpp
+  // 注册串口命令处理函数
+  SerialCmd.addCommand("S", receiveStop);         // 停止命令
+  SerialCmd.addCommand("L", receiveLED);          // LED控制
+  SerialCmd.addCommand("M", receiveMovement);     // 运动控制
+  SerialCmd.addCommand("H", receiveGesture);      // 手势控制
+  SerialCmd.addCommand("K", receiveSing);         // 声音控制
+  SerialCmd.addCommand("D", requestDistance);     // 距离请求
+  SerialCmd.addCommand("I", requestProgramId);    // 程序ID请求
+  SerialCmd.addCommand("J", requestMode);         // 模式请求
+  SerialCmd.addCommand("C", requestCalibration);  // 校准请求
+  SerialCmd.addDefaultHandler(receiveStop);       // 默认处理函数
+```
+
+| 指令 | 参数1 | 参数2 | 说明 |
+| ---- | ----- | ----- | ---- |
+| S    |       |       | 停止命令，停止所有运动 |
+| L    | 0/1   |       | LED控制，0为关闭，1为开启（因为不是点阵屏，该功能无效） |
+| M    | 工作模式 | 运行时间 | 运动控制，工作模式见下表，运行时间为毫秒 |
+| H    | 手势编号(1/2/3/7) |       | 手势控制 ，1为开心，2为超级开心，3为悲伤，7为爱心 |
+| K    |       |         | 因为没有加装蜂鸣器，所以该功能无效 |
+| D    |       |         | 距离请求，返回超声波传感器测量的距离 |
+| I    |       |         | 程序ID请求，返回当前程序的ID |
+| J    |       |         | 模式请求，返回当前工作模式 |
+| C    | 舵机编号（0-7） | 偏移量 | 校准请求，设置舵机的偏移量（偏移量保存在EEPROM中，永久化存储） |
+
+### 工作模式
+
+下面是源代码片段，展示了如何 工作模式的定义和处理：
+
+```cpp
+// 动作指令处理
+  switch (cmd) {
+  case 1:
+    robot.run(0);
+    break;  // 停止
+  case 2:
+    robot.run(1);
+    break;  // 前进
+  case 3:
+    robot.turnL(1, 550);
+    break;  // 左转
+  case 4:
+    robot.turnR(1, 550);
+    break;  // 右转
+  case 5:
+    robot.home();
+    break;  // 归位
+  case 6:
+    robot.pushUp();
+    break;  // 俯卧撑
+  case 7:
+    robot.upDown();
+    break;  // 上下运动
+  case 8:
+    robot.waveHAND();
+    break;  // 挥手
+  case 9:
+    robot.Hide();
+    break;  // 隐藏
+  case 10:
+    robot.omniWalk(true);
+    break;  // 全向行走(前)
+  case 11:
+    robot.omniWalk(false);
+    break;  // 全向行走(后)
+  case 12:
+    robot.dance(1, 1000);
+    break;  // 舞蹈1
+  case 13:
+    robot.frontBack(1, 750);
+    break;  // 前后运动
+  case 14:
+    robot.jump();
+    break;  // 跳跃
+  case 15:
+    robot.scared();
+    break;  // 害怕动作
+  case 90:
+    robot.runSingle(0);
+    break;  // 0 号舵机单独动作
+  case 91:
+    robot.runSingle(1);
+    break;  // 1 号舵机单独动作
+  case 92:
+    robot.runSingle(2);
+    break;  // 2 号舵机单独动作
+  case 93:
+    robot.runSingle(3);
+    break;  // 3 号舵机单独动作
+  case 94:
+    robot.runSingle(4);
+    break;  // 4 号舵机单独动作
+  case 95:
+    robot.runSingle(5);
+    break;  // 5 号舵机单独动作
+  case 96:
+    robot.runSingle(6);
+    break;  // 6 号舵机单独动作
+  case 97:
+    robot.runSingle(7);
+    break;  // 7 号舵机单独动作
+  default:
+    taken = false;
+    manualMode = true;
+  }
+```
+
+比如，进入 前进模式（2），你可以在串口监视器中输入 `M 2 1000`，表示前进模式，运行时间为1000毫秒（1秒）。或者缺省时间，直接输入 `M 2`，表示前进模式，运行时间为默认值（550毫秒）。
 
