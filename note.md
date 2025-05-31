@@ -11,6 +11,48 @@
 显示器型号：SH1106_128X32_VISIONOX_HW_I2C
 
 
+## 装配接线
+
+舵机引脚连接示意图：
+__________ __________ _________________
+|(pin9)_____)(pin8)  (pin2)(______(pin3)|  // 前腿舵机连接
+|__|       |left FRONT right|        |__|
+        |                |
+        |                |
+        |                |               // 身体部分
+_________ |                | __________
+|(pin7)_____)(pin6)__(pin4)(______(pin5)|  // 后腿舵机连接
+|__|                                 |__|
+
+超声波传感器：
+TRIGGER引脚 - 12
+ECHO引脚    - 11
+
+蜂鸣器引脚 - 13
+
+## 舵机编号
+```c++
+// trim[] for calibrating servo deviation,
+// initial posture (home) should like below
+// in symmetric
+//    \       / front left
+//     \_____/
+//     |     |->
+//     |_____|->
+//     /     \
+//    /       \ front right
+    
+// trim[FRONT_LEFT_HIP] = 0;
+// trim[FRONT_RIGHT_HIP] = -8;
+// trim[BACK_LEFT_HIP] = 8;
+// trim[BACK_RIGHT_HIP] = 5;
+
+// trim[FRONT_LEFT_LEG] = 2;
+// trim[FRONT_RIGHT_LEG] = -6;
+// trim[BACK_LEFT_LEG] = 6;
+// trim[BACK_RIGHT_LEG] = 5;
+```
+
 ## 偏移量记录
 
 | 舵机编号 | 偏移量 | 俯视角/抬高 |

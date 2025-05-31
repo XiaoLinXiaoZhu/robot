@@ -201,6 +201,52 @@ void MiniKame::run(int dir, float steps, float T) {
   setRestState(false);
 }
 
+void MiniKame::runSingle(int id, int dir, float steps, float T) {
+  if (getRestState() == true) {
+    setRestState(false);
+  }
+
+  digitalWrite(13, 0);
+  int x_amp = 15;
+  int z_amp = 15;
+  int ap = 15;
+  int hi = 0;
+  int front_x = 0;
+  float period[] = { T, T, T, T, T, T, T, T };
+  int amplitude[] = { x_amp, x_amp, z_amp, z_amp, x_amp, x_amp, z_amp, z_amp };
+  int offset[] = { 90 + ap - front_x,
+                  90 - ap + front_x,
+                  90 - hi,
+                  90 + hi,
+                  90 - ap - front_x,
+                  90 + ap + front_x,
+                  90 + hi,
+                  90 - hi };
+  int phase[] = { 0, 0, 90, 90, 180, 180, 90, 90 };
+  
+  // 根据上面的id将其他servos的禁用
+  for (int i = 0; i < 8; i++) {
+    if (i != id) {
+      amplitude[i] = 0;
+    }
+  }
+
+  char debug_msg[50];
+  char formatted_period[10];
+  uint8_t intPart = (int)period[id];
+  uint8_t decPart = abs((int)(period[id] * 100) % 100);
+  snprintf(formatted_period, sizeof(formatted_period), "%d.%02d", intPart, decPart);
+  sprintf(debug_msg, "Oscillator %d: period=%s, amp=%d, offset=%d, phase=%d", id, formatted_period, amplitude[id], offset[id], phase[id]);
+  Serial.println(debug_msg);
+  oscillator[id].setPeriod(period[id]);
+  oscillator[id].setAmplitude(amplitude[id]);
+  oscillator[id].setPhase(phase[id]);
+  oscillator[id].setOffset(offset[id]);
+  delay(1000); // 等待设置完成
+  oscillator[id].start();
+  oscillator[id].setTime(millis());
+}
+
 void MiniKame::omniWalk(bool side, float T, float turn_factor) {
   if (getRestState() == true) {
     setRestState(false);

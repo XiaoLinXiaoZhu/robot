@@ -254,6 +254,7 @@ public:
   double getBatteryLevel();
   double getBatteryVoltage();
   void run(int dir = 1, float steps = 4, float T = 550);
+  void runSingle(int id = 0, int dir = 1, float steps = 4, float T = 550);
   void walk(int dir = 1, float steps = 4, float T = 550);
   void turnL(float steps = 1, float period = 550);
   void turnR(float steps = 1, float period = 550);
