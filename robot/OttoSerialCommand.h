@@ -19,7 +19,7 @@
 
 
 #include <string.h>
-
+#include "IDebug.h"  // Include the debug header for debug functionality
 
 #define SERIALCOMMANDBUFFER 35  //16 after changed by me
 #define MAXSERIALCOMMANDS	16
@@ -30,7 +30,6 @@ class OttoSerialCommand
 public:
 	OttoSerialCommand();      // Constructor
 
-	void setDebug(void (*function)(const char *)); // Set a debug function to call with debug messages
 	void clearBuffer();   // Sets the command buffer to all '\0' (nulls)
 	char *next();         // returns pointer to next token found in command buffer (for getting arguments to commands)
 	void readSerial();    // Main entry point.  
@@ -52,7 +51,6 @@ private:
 	int numCommand;
 	OttoSerialCommandCallback CommandList[MAXSERIALCOMMANDS];   // Actual definition for command/handler array
 	void (*defaultHandler)();           // Pointer to the default handler function 
-	void (*debug)(const char *);        // Pointer to a debug function to call with debug messages
 	int usingOttoSoftwareSerial;            // Used as boolean to see if we're using OttoSoftwareSerial object or not
 
 };

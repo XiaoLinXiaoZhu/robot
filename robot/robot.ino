@@ -1,25 +1,6 @@
-// #include <setjmp.h>
-#include "OTTOKame.h"
-#include <EEPROM.h>
-// #include "OLED.h"
-#include "OttoSerialCommand.h"
-OttoSerialCommand SerialCmd;  // 串口命令处理对象
+#include "robot.h"
+#include "SmartLoad.h"
 
-// 硬件引脚定义
-#define CAL_TRIGGER_PIN 10          // 校准触发引脚
-#define LED_PIN 13                  // LED指示灯引脚
-#define PIN_Buzzer 13               // 蜂鸣器引脚
-#define TIME_INTERVAL 5000          // 时间间隔常量(毫秒)
-#define EEPROM_FASTLOAD_MAGIC 0xD2  // EEPROM地址(用于设置是否快速启动)
-#define EEPROM_FASTLOAD_OFFSET 25   // EEPROM偏移量(用于设置是否快速启动)
-bool getEEPROMFastLoad() {
-  // 获取EEPROM快速加载标志
-  return EEPROM.read(EEPROM_FASTLOAD_OFFSET) == EEPROM_FASTLOAD_MAGIC;
-}
-void setEEPROMFastLoad(bool enable) {
-  // 设置EEPROM快速加载标志
-  EEPROM.write(EEPROM_FASTLOAD_OFFSET, enable ? EEPROM_FASTLOAD_MAGIC : 0);
-}
 /*
   舵机引脚连接示意图：
   __________ __________ _________________
@@ -38,67 +19,6 @@ void setEEPROMFastLoad(bool enable) {
 
   蜂鸣器引脚 - 13
 */
-
-MiniKame robot;                                                   // 机器人控制对象
-bool obstacleDetected = false;                                    // 障碍物检测标志
-int T = 1000;                                                     // 动作时间参数
-int moveId = 0;                                                   // 当前动作ID
-int modeId = 0;                                                   // 当前模式ID
-int moveSize = 15;                                                // 动作幅度参数
-bool auto_mode = false;                                           // 自动模式标志
-bool random_walk = false;                                         // 随机行走标志
-bool stopSerial = false;                                          // 停止串口标志
-unsigned long cur_time, prev_serial_data_time, perv_sensor_time;  // 时间记录变量
-char cmd = 's';                                                   // 当前命令字符
-static char prev_cmd = '.';                                       // 上一个命令字符
-const char programID[] = "Otto_KAME7";                            // 程序标识符
-// jmp_buf jump_env;                                                // 跳转环境(用于异常处理)
-int randomDance = 0;  // 随机舞蹈编号
-// 使用一个 uint8_t 来同时保存 上次的模式和当前模式
-volatile uint8_t _MODE = 0B00000000;     // 上次模式和当前模式的组合
-#define MODE (_MODE & 0x0F)              // 当前模式(低4位)
-#define PREV_MODE ((_MODE >> 4) & 0x0F)  // 上次模式(高4位)
-#define DEFAULT_MODE 4                   // 默认模式
-
-// void debug(const char *message) {
-//   oled->writeLine(message); // 在OLED上显示调试信息
-//   Serial.println(message);   // 在串口监视器上显示调试信息
-// }
-// #define debug(message) oled->writeLine(message) // 在OLED上显示调试信息
-// #define debug(message) Serial.println(message) // 在串口监视器上显示调试信息
-// #define show(message) oled->writeLine(message) // 在OLED上显示调试信息
-
-void setMode(uint8_t newMode) {
-  // debug
-  switch (newMode) {
-  case 0:
-    debug("CM: Standby");
-    break;
-  case 1:
-    debug("CM: Random Dance");
-    break;
-  case 2:
-    debug("CM: Obstacle Avoidance");
-    break;
-  case 3:
-    debug("CM: Reserved");
-    break;
-  case 4:
-    debug("CM: Manual Control");
-    break;
-  default:
-    debug("CM: Unknown");
-    break;
-  }
-  _MODE = ((_MODE & 0x0F) << 4) | (newMode & 0x0F);
-}
-
-void debug(const char *message) {
-  // 在OLED上显示调试信息
-  // oled->writeLine(message);
-  // 在串口监视器上显示调试信息
-  Serial.println(message);
-}
 
 void checkMemory() {
   // 检查内存使用情况
@@ -148,25 +68,11 @@ void setup() {
 
 
   // 校准程序
-  {
-    //- 改为默认校准一次
-    // // pinMode(CAL_TRIGGER_PIN, OUTPUT);
-    // // digitalWrite(CAL_TRIGGER_PIN, 0);
-    // // pinMode(CAL_TRIGGER_PIN, INPUT);
-    // // while (digitalRead(CAL_TRIGGER_PIN)) // 检测校准触发
-    debug("Calibrating...");  // 显示校准信息
-    robot.home();             // 回到初始位置
-    // // digitalWrite(LED_PIN, 1); // LED闪烁
-    // // delay(100);
-    // // digitalWrite(LED_PIN, 0);
-    delay(2000);
-    robot.refresh();  // 刷新舵机位置
-  }
-
-  // 初始化时间记录
-  perv_sensor_time = prev_serial_data_time = millis();
+  debug("Calibrating...");  // 显示校准信息
+  robot.home();             // 回到初始位置
+  delay(2000);
+  robot.refresh();  // 刷新舵机位置
   robot.putMouth(smile);  // 显示笑脸
-  robot.sing(S_happy);    // 播放开心音效
   delay(200);
 
   // 注册串口命令处理函数
@@ -181,9 +87,6 @@ void setup() {
   SerialCmd.addCommand("C", requestCalibration);  // 校准请求
   SerialCmd.addDefaultHandler(receiveStop);       // 默认处理函数
 
-  SerialCmd.setDebug(debug);  // 设置调试函数
-
-  debug("Setup Complete");  // 显示初始化完成信息
   // 设置默认模式
   setMode(DEFAULT_MODE);  // 使用新模式设置函数
   // setMode(3); // 设置为预留模式3(可以根据需要修改为其他模式)
@@ -201,13 +104,13 @@ void loop() {
 
 
   // 串口数据处理
-  if (Serial.available() > 0 && MODE != 4) {
+  if (Serial.available() > 0 && CURRENT_MODE != 4) {
     SerialCmd.readSerial();     // 读取串口命令
     robot.putMouth(happyOpen);  // 显示张嘴表情
   }
 
   // 模式切换处理
-  switch (MODE) {
+  switch (CURRENT_MODE) {
   case 0:  // 模式0: 待机
     break;
 
@@ -253,7 +156,7 @@ void loop() {
     if (robot.getRestState() == false)  // 如果不是休息状态
     {
       setEEPROMFastLoad(false);  // 禁用快速加载
-      gaits(modeId);             // 执行指定动作
+      gaits(moveId);             // 执行指定动作
     }
 
     robot.refresh();  // 刷新状态(相当于update)
@@ -276,11 +179,6 @@ void loop() {
   }
 }
 
-/**
- * @brief 执行步态动作
- * @param cmd 动作指令编号
- * @return bool 是否成功执行
- */
 bool gaits(int cmd) {
   bool manualMode = false;
   bool taken = true;
@@ -294,7 +192,7 @@ bool gaits(int cmd) {
     robot.run(0);
     break;  // 停止
   case 2:
-    robot.run(1,4.0F,T);
+    robot.run(1, 4.0F, moveMentPeriod);
     break;  // 前进
   case 3:
     robot.turnL(1, 550);
@@ -385,9 +283,6 @@ void pause(int period) {
   } while (millis() <= timeout);
 }
 
-/**
- * @brief 障碍物检测函数
- */
 void obstacleDetector() {
   int distance = robot.getDistance();  // 获取距离
 
@@ -458,9 +353,9 @@ void receiveMovement() {
   // 获取时间参数
   arg = SerialCmd.next();
   if (arg != NULL) {
-    T = atoi(arg);
+    moveMentPeriod = atoi(arg);
   } else {
-    T = 1000;
+    moveMentPeriod = 1000;
   }
 
   // 获取幅度参数
@@ -514,67 +409,68 @@ void receiveSing() {
   }
 
   // 播放对应声音
-  switch (sing) {
-  case 1:
-    robot.sing(S_connection);
-    break;
-  case 2:
-    robot.sing(S_disconnection);
-    break;
-  case 3:
-    robot.sing(S_surprise);
-    break;
-  case 4:
-    robot.sing(S_OhOoh);
-    break;
-  case 5:
-    robot.sing(S_OhOoh2);
-    break;
-  case 6:
-    robot.sing(S_cuddly);
-    break;
-  case 7:
-    robot.sing(S_sleeping);
-    break;
-  case 8:
-    robot.sing(S_happy);
-    break;
-  case 9:
-    robot.sing(S_superHappy);
-    break;
-  case 10:
-    robot.sing(S_happy_short);
-    break;
-  case 11:
-    robot.sing(S_sad);
-    break;
-  case 12:
-    robot.sing(S_confused);
-    break;
-  case 13:
-    robot.sing(S_fart1);
-    break;
-  case 14:
-    robot.sing(S_fart2);
-    break;
-  case 15:
-    robot.sing(S_fart3);
-    break;
-  case 16:
-    robot.sing(S_mode1);
-    break;
-  case 17:
-    robot.sing(S_mode2);
-    break;
-  case 18:
-    robot.sing(S_mode3);
-    break;
-  case 19:
-    robot.sing(S_buttonPushed);
-    break;
-  default:
-    break;
-  }
+  // 我们没有蜂鸣器，这里无法播放声音
+  // switch (sing) {
+  // case 1:
+  //   robot.sing(S_connection);
+  //   break;
+  // case 2:
+  //   robot.sing(S_disconnection);
+  //   break;
+  // case 3:
+  //   robot.sing(S_surprise);
+  //   break;
+  // case 4:
+  //   robot.sing(S_OhOoh);
+  //   break;
+  // case 5:
+  //   robot.sing(S_OhOoh2);
+  //   break;
+  // case 6:
+  //   robot.sing(S_cuddly);
+  //   break;
+  // case 7:
+  //   robot.sing(S_sleeping);
+  //   break;
+  // case 8:
+  //   robot.sing(S_happy);
+  //   break;
+  // case 9:
+  //   robot.sing(S_superHappy);
+  //   break;
+  // case 10:
+  //   robot.sing(S_happy_short);
+  //   break;
+  // case 11:
+  //   robot.sing(S_sad);
+  //   break;
+  // case 12:
+  //   robot.sing(S_confused);
+  //   break;
+  // case 13:
+  //   robot.sing(S_fart1);
+  //   break;
+  // case 14:
+  //   robot.sing(S_fart2);
+  //   break;
+  // case 15:
+  //   robot.sing(S_fart3);
+  //   break;
+  // case 16:
+  //   robot.sing(S_mode1);
+  //   break;
+  // case 17:
+  //   robot.sing(S_mode2);
+  //   break;
+  // case 18:
+  //   robot.sing(S_mode3);
+  //   break;
+  // case 19:
+  //   robot.sing(S_buttonPushed);
+  //   break;
+  // default:
+  //   break;
+  // }
   sendFinalAck();
 }
 
@@ -626,7 +522,7 @@ void requestMode() {
   char *arg;
   arg = SerialCmd.next();  // 获取模式编号
   if (arg != NULL) {
-    modeId = atoi(arg);
+    setMode(atoi(arg));  // 使用新模式设置函数
     robot.putMouth(heart);  // 显示心形
     delay(1000);
     robot.clearMouth();
@@ -634,35 +530,35 @@ void requestMode() {
     robot.putMouth(xMouth);  // 显示X嘴
     delay(2000);
     robot.clearMouth();
-    modeId = 0;
+    setMode(0);  // 如果没有参数则设置为模式0
   }
 
   // 设置对应模式
-  switch (modeId) {
+  switch (CURRENT_MODE) {
   case 0:
     setMode(0);  // 使用新模式设置函数
     break;       // 模式0: 待机
   case 1:        // 模式1: 随机舞蹈
     setMode(1);  // 使用新模式设置函数
-    robot.sing(S_mode1);
+    // robot.sing(S_mode1);
     robot.putMouth(one);
     delay(1000);
     delay(200);
     break;
   case 2:  // 模式2: 避障模式
     setMode(2);
-    robot.sing(S_mode2);
+    // robot.sing(S_mode2);
     robot.putMouth(two);
     delay(1000);
     break;
   case 3:  // 模式3: (预留)
     setMode(3);
-    robot.sing(S_mode3);
+    // robot.sing(S_mode3);
     robot.putMouth(three);
     delay(1000);
     break;
   case 4:  // 模式4: 手动控制
-    robot.sing(S_mode1);
+    // robot.sing(S_mode1);
     robot.putMouth(four);
     delay(1000);
     setMode(4);

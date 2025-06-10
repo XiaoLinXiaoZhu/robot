@@ -19,26 +19,11 @@
 // #define show(message) oled->writeLine(message) // 在OLED上显示调试信息
 
 // Constructor makes sure some things are set. 
-void _debug(const char *message) {
-	return;
-}
 OttoSerialCommand::OttoSerialCommand() {
 	strncpy(delim, " ", MAXDELIMETER);  // strtok_r needs a null-terminated string
 	term = '\r';   // return character, default terminator for commands
 	numCommand = 0;    // Number of callback handlers installed
 	clearBuffer();
-
-	debug = _debug; // Default debug function does nothing
-}
-
-// Set a debug function to call with debug messages.
-void OttoSerialCommand::setDebug(void (*function)(const char *)) {
-	if (function == NULL) {
-		debug = _debug; // If no function provided, set to default that does nothing
-		return;
-	}
-	debug = function;
-	debug("Debug function set."); // Call the debug function to indicate it has been set
 }
 
 //
