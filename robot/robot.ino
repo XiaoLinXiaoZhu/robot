@@ -141,8 +141,10 @@ void setup() {
 
   checkMemory();  // 检查内存使用情况
   // 设置反转情况
+  // robot.reverseServo(0);  // 反转前右腿
+  robot.reverseServo(2);  // 反转前左腿
   robot.reverseServo(3);
-  robot.reverseServo(7);
+  // robot.reverseServo(7);
 
 
   // 校准程序
@@ -184,6 +186,9 @@ void setup() {
   debug("Setup Complete");  // 显示初始化完成信息
   // 设置默认模式
   setMode(DEFAULT_MODE);  // 使用新模式设置函数
+  // setMode(3); // 设置为预留模式3(可以根据需要修改为其他模式)
+  // moveId = 2;  // 初始化动作ID
+  // robot.setRestState(false);  // 确保机器人不处于休息状态
 }
 
 /**
@@ -191,7 +196,7 @@ void setup() {
  * @details 根据当前模式执行不同行为，处理串口输入
  */
 void loop() {
-  delay(200);  // 暂停200毫秒，避免过快循环
+  // delay(200);  // 暂停200毫秒，避免过快循环
   // checkMemory(); // 检查内存使用情况
 
 
@@ -244,6 +249,14 @@ void loop() {
     break;
 
   case 3:  // 模式3: (预留)
+    // 直接前进
+    if (robot.getRestState() == false)  // 如果不是休息状态
+    {
+      setEEPROMFastLoad(false);  // 禁用快速加载
+      gaits(modeId);             // 执行指定动作
+    }
+
+    robot.refresh();  // 刷新状态(相当于update)
     break;
   case 4:                    // 模式4: 手动控制模式
     SerialCmd.readSerial();  // 读取串口命令
@@ -281,7 +294,7 @@ bool gaits(int cmd) {
     robot.run(0);
     break;  // 停止
   case 2:
-    robot.run(1);
+    robot.run(1,4.0F,T);
     break;  // 前进
   case 3:
     robot.turnL(1, 550);

@@ -177,10 +177,10 @@ void MiniKame::run(int dir, float steps, float T) {
   setRestState(true);
 
   digitalWrite(13, 0);
-  int x_amp = 15;
-  int z_amp = 15;
-  int ap = 15;
-  int hi = 0;
+  int x_amp = 0;
+  int z_amp = 0;
+  int ap = 20;
+  int hi = 35;
   int front_x = 0;
   float period[] = { T, T, T, T, T, T, T, T };
   int amplitude[] = { x_amp, x_amp, z_amp, z_amp, x_amp, x_amp, z_amp, z_amp };
@@ -192,11 +192,17 @@ void MiniKame::run(int dir, float steps, float T) {
                   90 + ap + front_x,
                   90 + hi,
                   90 - hi };
+  // int phase[] = { 60, 300, 120, 300, 60, 300, 240, 60 };
   int phase[] = { 0, 0, 90, 90, 180, 180, 90, 90 };
-  if (dir == 1) {
-    phase[0] = phase[1] = 180;
-    phase[4] = phase[5] = 0;
-  }
+  // if (dir == 1) {
+  //   phase[0] = phase[1] = 180;
+  //   phase[4] = phase[5] = 0;
+  // }
+
+  // if (dir == 1) {
+  //   phase[0] = phase[1] = 180;
+  //   phase[4] = phase[5] = 0;
+  // }
   execute(steps, period, amplitude, offset, phase);
   setRestState(false);
 }

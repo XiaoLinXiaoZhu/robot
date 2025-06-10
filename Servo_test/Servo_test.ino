@@ -111,13 +111,13 @@ void debug(const char* message) {
  */
 void setup() {
   Serial.begin(9600);          // 初始化串口通信
-  randomSeed(analogRead(A6));  // 设置随机种子
+  // randomSeed(analogRead(A6));  // 设置随机种子
 
   if (getEEPROMFastLoad()) {
     debug("Fast Reload");
   } else {
     debug("Slow Reload");
-    delay(4000);
+    delay(5000);
   }
   setEEPROMFastLoad(true);  // 设置快速加载标志
 
@@ -140,7 +140,7 @@ void setup() {
  */
 void loop() {
   // 使用计时器控制速度
-      // debug
+  // debug
   debug("Looping...");
 
   static unsigned long previousMillis = 0;
