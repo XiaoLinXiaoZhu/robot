@@ -1,6 +1,12 @@
 #include "OLED.h"
+// Initialize the static instance pointer
+OLED *OLED::instance = nullptr;
 
-OLED oled; // 声明一个全局的OLED实例
+// 构造函数
+OLED::OLED()
+  : o() {
+  init();  // 初始化OLED显示屏
+}
 
 // 初始化OLED显示屏
 void OLED::init() {
@@ -21,24 +27,26 @@ void OLED::clear() {
 
 // 在OLED上写入一行文本
 void OLED::writeLine(const char *text) {
-  // 改为静态共享缓冲区
-  static char buffer[32]; 
-  
   // 当前逻辑行号（0~3）
   uint8_t currentLine = debugCount & 0x03; // MaxLine == 4 → & 0x03
   uint8_t lastLine = (currentLine - 1) & 0x03;
 
   // 格式化 buffer：">%02u %.12s"
+  char buffer[32];
   snprintf(buffer, sizeof(buffer), ">%02u %.12s", debugCount, text);
 
   // 清除当前行 + 写入新内容
   o.clearLine(currentLine);
+  o.setFont(FONT);
   o.drawString(0, currentLine, buffer);
   // 清除上一行（如果存在）
   o.drawString(0, lastLine, " ");
 
   // 更新计数器并循环（最大到 99）
-  debugCount = (debugCount + 1) % (MaxDebugCount + 1);
+  debugCount++;
+  if (debugCount > MaxDebugCount) {
+    debugCount = 0;
+  }
 }
 
 

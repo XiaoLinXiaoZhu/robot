@@ -11,15 +11,30 @@
 #define OLEDTYPE U8X8_SH1106_128X32_VISIONOX_HW_I2C
 
 // OLED 最多显示 99 行,使用 uint8_t 类型
-// constexpr uint8_t MaxDebugCount = 99;
-#define MaxDebugCount 99
+constexpr uint8_t MaxDebugCount = 99;
+
+#define oled OLED::getInstance()
 
 class OLED {
-public:
-  OLEDTYPE o;
+private:
+  OLED();
+  static OLED *instance;
   uint8_t debugCount = 0;
 
-  OLED() {init();}
+public:
+  OLEDTYPE o;
+
+  // Delete copy constructor and assignment operator
+  OLED(const OLED &) = delete;
+  void operator=(const OLED &) = delete;
+
+  // Get the singleton instance
+  static OLED *getInstance() {
+    if (instance == nullptr) {
+      instance = new OLED();
+    }
+    return instance;
+  }
 
   // 初始化OLED显示屏
   void init();
@@ -27,13 +42,10 @@ public:
   // 在指定位置显示文本
   void displayText(const char *text, int x, int y);
 
+  void clear();
+
   // 在OLED上写入一行文本，会附带行号和当前行标识
   void writeLine(const char *text);
-
-  // 清空OLED显示屏
-  void clear();
 };
-
-extern OLED oled; // 声明一个全局的OLED实例
 
 #endif // OLED_H

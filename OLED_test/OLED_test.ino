@@ -2,7 +2,7 @@
 #include "OLED.h"
 #define DEBUG(message) \
   do { \
-      oled->writeLine(message); \
+      oled.writeLine(message); \
       Serial.print("DEBUG: "); \
       Serial.println(message); \
   } while (0)
@@ -11,11 +11,11 @@
 void setup(void) {
   Serial.begin(9600);              // 初始化串口通信
   delay(200);                      // 延时2秒
-  oled->writeLine("Arduino OLED"); // 在指定位置显示文本
+  oled.writeLine("Arduino OLED"); // 在指定位置显示文本
   delay(200);                      // 延时2秒
-  oled->writeLine("Your input");
-  oled->writeLine("will be print");
-  oled->writeLine("below");
+  oled.writeLine("Your input");
+  oled.writeLine("will be print");
+  oled.writeLine("below");
   delay(200); // 延时2秒
 }
 
