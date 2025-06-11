@@ -5,7 +5,7 @@
 #include "OttoSerialCommand.h"
 #include "IDebug.h"
 
-const char programID[] = "Otto_KAME7";                            // 程序标识符
+const char programID[] PROGMEM = "Otto_KAME7";                   // 程序标识符存储在程序内存中
 
 #ifdef VSCODE
 #include "HardwareSerial0.cpp"  // VSCode环境下需要指明硬件串口实现
@@ -21,9 +21,9 @@ MiniKame robot;                                                   // 机器人�
 bool obstacleDetected = false;                                    // 障碍物检测标志
 
 //- 运动参数
-int moveMentPeriod = 1000;                                                     // 动作时间参数
-int moveId = 0;                                                   // 当前动作ID
-int moveSize = 15;                                                // 动作幅度参数
+uint16_t moveMentPeriod = 1000;                                 // 动作时间参数
+uint8_t moveId = 0;                                             // 当前动作ID
+uint8_t moveSize = 15;                                          // 动作幅度参数
 
 //- 自定义指令
 OttoSerialCommand SerialCmd;  // 串口命令处理对象
